@@ -1,0 +1,16 @@
+{
+  "short_name": "Dosagem Pro",
+  "name": "Dosagem Pro - João B. Coelho",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/822/822143.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f4f7f6",
+  "display": "standalone",
+  "scope": "./",
+  "theme_color": "#e74c3c"
+}
