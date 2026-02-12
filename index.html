@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dosagem Pro - João B. Coelho</title<link rel="manifest" href="manifest.json">
+
+    <style>
+        :root { --primary: #2c3e50; --accent: #e74c3c; --success: #27ae60; --whatsapp: #25D366; }
+        body { font-family: sans-serif; background: #f4f7f6; color: var(--primary); padding: 15px; margin: 0; }
+        .container { max-width: 500px; margin: 10px auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; border-bottom: 2px solid var(--accent); padding-bottom: 10px; margin-top: 0; }
+        .campo { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; margin-top: 10px; color: white; }
+        .btn-calc { background: #3498db; }
+        .btn-timer { background: var(--success); display: none; }
+        .btn-zap { background: var(--whatsapp); display: none; }
+        #resultado { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; background: #d1ecf1; border-left: 5px solid #0c5460; }
+        #historico { margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        .lista-h { list-style: none; padding: 0; font-size: 13px; }
+        .lista-h li { background: #f8f9fa; padding: 8px; margin-bottom: 5px; border-radius: 5px; display: flex; justify-content: space-between; border-left: 3px solid var(--success); }
+        .footer { font-size: 10px; text-align: center; margin-top: 20px; color: #95a5a6; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>💊 Dosagem Pro</h2>
+    
+    <div class="campo">
+        <label>Peso (kg)</label>
+        <input type="number" id="peso" placeholder="Ex: 20" inputmode="decimal">
+    </div>
+
+    <div class="campo">
+        <label>Medicamento</label>
+        <select id="remedio">
+            <optgroup label="Gotas">
+                <option value="paracetamol_g">Paracetamol (200mg/mL)</option>
+                <option value="dipirona_g">Dipirona (500mg/mL)</option>
+                <option value="ibuprofeno_g">Ibuprofeno (50mg/mL)</option>
+                <option value="dramin_g">Dramin B6</option>
+                <option value="simeticona_g">Simeticona (Luftal)</option>
+            </optgroup>
+            <optgroup label="Líquidos / Xaropes">
+                <option value="amoxicilina_l">Amoxicilina (250mg/5mL)</option>
+                <option value="prednisolona_l">Prednisolona (3mg/mL)</option>
+                <option value="desloratadina_l">Desloratadina Xarope</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <button class="btn-calc" onclick="calcular()">1. Calcular Dosagem</button>
+    <div id="resultado"></div>
+    
+    <button id="btnRegistar" class="btn-timer" onclick="registarDose()">2. Registar Dose</button>
+    <button id="btnZap" class="btn-zap" onclick="enviarZap()">3. Partilhar no WhatsApp</button>
+    
+    <div id="historico">
+        <h4 style="margin:0 0 10px 0">📜 Últimas Doses:</h4>
+        <ul id="lista-historico" class="lista-h"></ul>
+    </div>
+
+    <div class="footer">Este programa pertence a João B. Coelho.</div>
+</div>
+
+<script>
+    const listaRemedios = {
+        "paracetamol_g": { n: "Paracetamol", c: (p) => Math.min(Math.round(p), 35) + " gotas", h: 6 },
+        "dipirona_g": { n: "Dipirona", c: (p) => Math.min(Math.round(p), 40) + " gotas", h: 6 },
+        "ibuprofeno_g": { n: "Ibuprofeno", c: (p) => Math.round(p) + " gotas", h: 8 },
+        "dramin_g": { n: "Dramin B6", c: (p) => Math.min(Math.round(p), 40) + " gotas", h: 6 },
+        "simeticona_g": { n: "Simeticona", c: (p) => Math.round(p) + " gotas", h: 8 },
+        "amoxicilina_l": { n: "Amoxicilina", c: (p) => (p * 0.5).toFixed(1) + " mL", h: 8 },
+        "prednisolona_l": { n: "Prednisolona", c: (p) => (p * 0.33).toFixed(1) + " mL", h: 24 },
+        "desloratadina_l": { n: "Desloratadina", c: (p) => (p > 12 ? "5.0" : "2.5") + " mL", h: 24 }
+    };
+
+    let dadosDose = {};
+
+    window.onload = function() { atualizarLista(); };
+
+    function calcular() {
+        const p = document.getElementById('peso').value;
+        const r = document.getElementById('remedio').value;
+        if(!p || p <= 0) return alert("Por favor, insira o peso.");
+
+        const med = listaRemedios[r];
+        dadosDose = { nome: med.n, dose: med.c(p), horas: med.h };
+
+        const res = document.getElementById('resultado');
+        res.style.display = "block";
+        res.innerHTML = `<b>${dadosDose.nome}</b><br>Dose: ${dadosDose.dose}<br>De ${dadosDose.horas} em ${dadosDose.horas}h`;
+        document.getElementById('btnRegistar').style.display = "block";
+    }
+
+    function registarDose() {
+        const hora = new Date().toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'});
+        let h = JSON.parse(localStorage.getItem('hist_completo') || "[]");
+        h.unshift({ n: dadosDose.nome, t: hora });
+        localStorage.setItem('hist_completo', JSON.stringify(h.slice(0, 3)));
+        
+        atualizarLista();
+        document.getElementById('btnZap').style.display = "block";
+        alert("Dose registada e mensagem copiada!");
+        
+        // Copia automaticamente para facilitar se o link falhar
+        copiarTexto();
+    }
+
+    function atualizarLista() {
+        const lista = document.getElementById('lista-historico');
+        const h = JSON.parse(localStorage.getItem('hist_completo') || "[]");
+        lista.innerHTML = h.length ? h.map(i => `<li><span><b>${i.n}</b></span><span>${i.t}</span></li>`).join('') : "<li>Nenhum registo</li>";
+    }
+
+    function copiarTexto() {
+        const msg = `💊 *Dosagem Pro (João B. Coelho)*\n✅ *Remédio:* ${dadosDose.nome}\n💧 *Dose:* ${dadosDose.dose}\n⏰ *Hora:* ${new Date().toLocaleTimeString()}\n⏳ *Próxima em:* ${dadosDose.horas}h`;
+        const el = document.createElement('textarea');
+        el.value = msg;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        return msg;
+    }
+
+    function enviarZap() {
+        const msg = copiarTexto();
+        // Tenta abrir. Se o Acode bloquear, o usuário já tem o texto copiado.
+        window.location.href = "https://wa.me/?text=" + encodeURIComponent(msg);
+    }
+</script>
+</body>
+</html>
